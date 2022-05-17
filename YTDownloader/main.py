@@ -6,30 +6,42 @@ from pytube import YouTube
 from tkinter import filedialog as fd, messagebox
 
 """
-    24April2022: this code isn't working at the moment. according to pytube's issues tracker on Github, YouTube
-    changed their code and the cipher.py file needs to be changed until pytube's developer can update
-    the library
+    17May2022 - Pytube has been updated and this code is working once again
 """
 
 
 def download_video():
     try:
+        progress_label.config(text="Please wait")
         website = str(website_input.get())
         yt = YouTube(f"{website}")
         yt_video = yt.streams.get_highest_resolution()
-        yt.register_on_progress_callback(progress_check)
+        file_size = round((yt_video.filesize / 1000000), 2)
         yt_video.download(directory_name)
-        print(yt_video.filesize)
-        return yt_video.filesize
-    except pytube.exceptions.PytubeError:
-        # Todo - add different exceptions. this is just a general exception that doesn't help much
+        progress_label.config(text=f"{file_size}mb downloaded to {directory_name}")
+        print(f"{file_size} mb")
+    except pytube.exceptions.AgeRestrictedError as error:
+        messagebox.showerror("Error", f"{error}")
+    except pytube.exceptions.ExtractError:
         messagebox.showerror("Error", "Please check the URL")
-
-
-def progress_check(stream, chunk, bytes_remaining):
-    # Todo - yeah, this is goofy with the download_video() returning the file size. going to redo this
-    progress_label.config(text=f"Downloaded {round(((download_video() - bytes_remaining) / 1000000), 2)} "
-                               f"of {round((download_video() / 1000000), 2)}MB")
+    except pytube.exceptions.HTMLParseError:
+        messagebox.showerror("Error", "HTML could not be parsed")
+    except pytube.exceptions.LiveStreamError:
+        messagebox.showerror("Error", "Video is a live stream")
+    except pytube.exceptions.MaxRetriesExceeded:
+        messagebox.showerror("Error", "Maximum number of retries exceeded")
+    except pytube.exceptions.MembersOnly:
+        messagebox.showerror("Error", "Video is members-only")
+    except pytube.exceptions.VideoPrivate:
+        messagebox.showerror("Error", "Video is private")
+    except pytube.exceptions.VideoRegionBlocked:
+        messagebox.showerror("Error", "Video is region blocked")
+    except pytube.exceptions.VideoUnavailable:
+        messagebox.showerror("Error", "Base video unavailable error")
+    except pytube.exceptions.PytubeError:
+        messagebox.showerror("Error", "Please check the URL and try again")
+    except:
+        messagebox.showerror("Error", "There has been an unexpected error. Please try again")
 
 
 def paste_url():
